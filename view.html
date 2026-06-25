@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>광수중학교 2026 3학년 진로 희망분야 제출 조회</title>
+<title>광수중학교 2026 진로 희망분야 제출 조회</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   :root{ --primary:#2c6e49; --primary-dark:#1f4d34; --bg:#f6f8f7; --card:#ffffff; --border:#dfe7e2; --text:#222; --muted:#6b7872; }
@@ -30,9 +30,13 @@
 </style>
 </head>
 <body>
-<header><h1>광수중학교 2026 3학년 진로 희망분야 제출 조회</h1></header>
+<header><h1>광수중학교 2026 진로 희망분야 제출 조회</h1></header>
 <div class="wrap">
   <div class="toolbar">
+    <div class="field-set">
+      <label>학년</label>
+      <select id="gradeFilter" onchange="onGradeChange()"><option value="">전체</option></select>
+    </div>
     <div class="field-set">
       <label>반</label>
       <select id="banFilter" onchange="applyFilter()"><option value="">전체</option></select>
@@ -72,7 +76,8 @@ function loadData() {
   document.getElementById('tableWrap').style.display = 'none';
   callApi('list').then(res => {
     if (!res.ok) { document.getElementById('loading').textContent = '불러오기 실패: ' + (res.error || ''); return; }
-    allRecords = res.records.sort((a, b) => (a.ban - b.ban) || (a.num - b.num));
+    allRecords = res.records.sort((a, b) => (a.grade - b.grade) || (a.ban - b.ban) || (a.num - b.num));
+    populateGradeFilter();
     populateBanFilter();
     document.getElementById('loading').style.display = 'none';
     document.getElementById('tableWrap').style.display = 'block';
@@ -80,16 +85,33 @@ function loadData() {
   }).catch(() => { document.getElementById('loading').textContent = '서버에 연결할 수 없습니다.'; });
 }
 
+function populateGradeFilter() {
+  const grades = [...new Set(allRecords.map(r => r.grade))].sort((a, b) => a - b);
+  const sel = document.getElementById('gradeFilter');
+  sel.innerHTML = '<option value="">전체</option>' + grades.map(g => `<option value="${g}">${g}학년</option>`).join('');
+}
+
 function populateBanFilter() {
-  const bans = [...new Set(allRecords.map(r => r.ban))].sort((a, b) => a - b);
+  const grade = document.getElementById('gradeFilter').value;
+  const source = grade ? allRecords.filter(r => String(r.grade) === grade) : allRecords;
+  const bans = [...new Set(source.map(r => r.ban))].sort((a, b) => a - b);
   const sel = document.getElementById('banFilter');
+  const prev = sel.value;
   sel.innerHTML = '<option value="">전체</option>' + bans.map(b => `<option value="${b}">${b}반</option>`).join('');
+  if (bans.some(b => String(b) === prev)) sel.value = prev;
+}
+
+function onGradeChange() {
+  populateBanFilter();
+  applyFilter();
 }
 
 function applyFilter() {
+  const grade = document.getElementById('gradeFilter').value;
   const ban = document.getElementById('banFilter').value;
   const name = document.getElementById('nameFilter').value.trim();
   const filtered = allRecords.filter(r => {
+    if (grade && String(r.grade) !== grade) return false;
     if (ban && String(r.ban) !== ban) return false;
     if (name && !String(r.name).includes(name)) return false;
     return true;
