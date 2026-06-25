@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>광수중학교 2026 3학년 진로 희망분야 제출 조회</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root{ --primary:#2c6e49; --primary-dark:#1f4d34; --bg:#f6f8f7; --card:#ffffff; --border:#dfe7e2; --text:#222; --muted:#6b7872; }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Apple SD Gothic Neo","Malgun Gothic",sans-serif;background:var(--bg);color:var(--text);}
+  header{background:var(--primary);color:#fff;padding:18px 16px;text-align:center;}
+  header h1{margin:0;font-size:1.15rem;font-weight:700;}
+  .wrap{max-width:1000px;margin:0 auto;padding:18px 14px 60px;}
+  .toolbar{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:16px;display:flex;flex-wrap:wrap;gap:12px;align-items:end;}
+  .field-set{display:flex;flex-direction:column;gap:6px;}
+  .field-set label{font-size:0.82rem;color:var(--muted);font-weight:600;}
+  select, input[type=text]{padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:0.95rem;}
+  .grow{flex:1;min-width:160px;}
+  button{cursor:pointer;border:none;border-radius:8px;padding:10px 16px;font-size:0.9rem;font-weight:700;background:var(--primary);color:#fff;}
+  button.secondary{background:#eee;color:#333;}
+  .summary{font-size:0.88rem;color:var(--muted);margin-bottom:10px;}
+  table{width:100%;border-collapse:collapse;background:var(--card);border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.04);}
+  thead th{background:var(--primary);color:#fff;text-align:left;padding:10px 12px;font-size:0.85rem;position:sticky;top:0;}
+  tbody td{padding:10px 12px;border-bottom:1px solid #eee;font-size:0.9rem;}
+  tbody tr:hover{background:#f3f8f5;}
+  .unsubmitted{color:#c0392b;font-style:italic;}
+  .table-wrap{max-height:70vh;overflow:auto;border-radius:12px;}
+  #loading{text-align:center;padding:40px;color:var(--muted);}
+</style>
+</head>
+<body>
+<header><h1>광수중학교 2026 3학년 진로 희망분야 제출 조회</h1></header>
+<div class="wrap">
+  <div class="toolbar">
+    <div class="field-set">
+      <label>반</label>
+      <select id="banFilter" onchange="applyFilter()"><option value="">전체</option></select>
+    </div>
+    <div class="field-set grow">
+      <label>이름 검색</label>
+      <input type="text" id="nameFilter" placeholder="이름 입력" oninput="applyFilter()">
+    </div>
+    <button onclick="downloadExcel()">엑셀로 다운로드</button>
+    <button class="secondary" onclick="loadData()">새로고침</button>
+  </div>
+  <div class="summary" id="summary"></div>
+  <div id="loading">불러오는 중...</div>
+  <div class="table-wrap hidden" id="tableWrap" style="display:none;">
+    <table>
+      <thead>
+        <tr><th>학년</th><th>반</th><th>번호</th><th>이름</th><th>희망분야</th><th>희망직업</th><th>제출시각</th></tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzgL4ae-W1nkVv2oPk5-JQhnRBJal8uIJvOkey347u2_PjmvCkGS9dTnwh2A0i3bhMOIA/exec';
+let allRecords = [];
+
+function callApi(action, params) {
+  const url = new URL(APPS_SCRIPT_URL);
+  url.searchParams.set('action', action);
+  if (params) Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
+  return fetch(url.toString()).then(r => r.json());
+}
+
+function loadData() {
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('tableWrap').style.display = 'none';
+  callApi('list').then(res => {
+    if (!res.ok) { document.getElementById('loading').textContent = '불러오기 실패: ' + (res.error || ''); return; }
+    allRecords = res.records.sort((a, b) => (a.ban - b.ban) || (a.num - b.num));
+    populateBanFilter();
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('tableWrap').style.display = 'block';
+    applyFilter();
+  }).catch(() => { document.getElementById('loading').textContent = '서버에 연결할 수 없습니다.'; });
+}
+
+function populateBanFilter() {
+  const bans = [...new Set(allRecords.map(r => r.ban))].sort((a, b) => a - b);
+  const sel = document.getElementById('banFilter');
+  sel.innerHTML = '<option value="">전체</option>' + bans.map(b => `<option value="${b}">${b}반</option>`).join('');
+}
+
+function applyFilter() {
+  const ban = document.getElementById('banFilter').value;
+  const name = document.getElementById('nameFilter').value.trim();
+  const filtered = allRecords.filter(r => {
+    if (ban && String(r.ban) !== ban) return false;
+    if (name && !String(r.name).includes(name)) return false;
+    return true;
+  });
+  renderTable(filtered);
+  const submitted = filtered.filter(r => r.field).length;
+  document.getElementById('summary').textContent = `총 ${filtered.length}명 / 제출 ${submitted}명 / 미제출 ${filtered.length - submitted}명`;
+}
+
+function renderTable(records) {
+  document.getElementById('tbody').innerHTML = records.map(r => `
+    <tr>
+      <td>${r.grade}</td><td>${r.ban}</td><td>${r.num}</td><td>${r.name}</td>
+      <td>${r.field || '<span class="unsubmitted">미제출</span>'}</td>
+      <td>${r.job || ''}</td>
+      <td>${r.time || ''}</td>
+    </tr>
+  `).join('');
+}
+
+function downloadExcel() {
+  const ban = document.getElementById('banFilter').value;
+  const name = document.getElementById('nameFilter').value.trim();
+  const filtered = allRecords.filter(r => {
+    if (ban && String(r.ban) !== ban) return false;
+    if (name && !String(r.name).includes(name)) return false;
+    return true;
+  });
+  const rows = filtered.map(r => ({
+    '학년': r.grade, '반': r.ban, '번호': r.num, '이름': r.name,
+    '희망분야': r.field, '희망직업': r.job, '제출시각': r.time
+  }));
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '진로희망분야');
+  XLSX.writeFile(wb, '진로희망분야_제출현황.xlsx');
+}
+
+loadData();
+</script>
+</body>
+</html>

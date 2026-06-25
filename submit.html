@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>광수중학교 2026 3학년 진로 희망분야 제출</title>
+<style>
+  :root{
+    --primary:#2c6e49; --primary-dark:#1f4d34; --bg:#f6f8f7; --card:#ffffff;
+    --border:#dfe7e2; --text:#222; --muted:#6b7872; --accent:#ff8c42;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Apple SD Gothic Neo","Malgun Gothic",sans-serif;background:var(--bg);color:var(--text);}
+  header{background:var(--primary);color:#fff;padding:18px 16px;text-align:center;}
+  header h1{margin:0;font-size:1.15rem;font-weight:700;}
+  .wrap{max-width:720px;margin:0 auto;padding:18px 14px 60px;}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04);}
+  label{display:block;font-size:0.9rem;color:var(--muted);margin-bottom:6px;font-weight:600;}
+  input[type=text]{width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:10px;font-size:1rem;margin-bottom:14px;}
+  input[type=text]:focus{outline:none;border-color:var(--primary);}
+  button{cursor:pointer;border:none;border-radius:10px;padding:13px 20px;font-size:1rem;font-weight:700;}
+  .btn-primary{background:var(--primary);color:#fff;width:100%;}
+  .btn-primary:disabled{background:#aab8b1;cursor:not-allowed;}
+  .btn-primary:active{background:var(--primary-dark);}
+  #msg{font-size:0.88rem;color:#c0392b;min-height:18px;margin-top:-6px;margin-bottom:6px;}
+  .student-info{background:#eef6f0;border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:0.95rem;}
+  .student-info b{color:var(--primary-dark);}
+  .field-group{border:1px solid var(--border);border-radius:12px;margin-bottom:12px;overflow:hidden;}
+  .field-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:#fafcfb;cursor:pointer;}
+  .field-head:active{background:#f0f4f2;}
+  .field-title{font-weight:700;font-size:1.02rem;}
+  .field-desc{font-size:0.85rem;color:var(--muted);margin-top:4px;line-height:1.4;}
+  .chevron{transition:transform .2s;color:var(--muted);font-size:1.1rem;flex-shrink:0;margin-left:10px;}
+  .field-group.open .chevron{transform:rotate(180deg);}
+  .job-list{display:none;border-top:1px solid var(--border);}
+  .field-group.open .job-list{display:block;}
+  .job-row{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:12px 16px;border-bottom:1px solid #f0f0f0;}
+  .job-row:last-child{border-bottom:none;}
+  .job-text{flex:1;}
+  .job-name{font-weight:600;font-size:0.95rem;}
+  .job-desc{font-size:0.82rem;color:var(--muted);margin-top:3px;line-height:1.4;}
+  .pick-btn{flex-shrink:0;background:var(--accent);color:#fff;padding:8px 14px;border-radius:8px;font-size:0.85rem;white-space:nowrap;}
+  .pick-btn.selected{background:var(--primary);}
+  .selection-bar{position:sticky;bottom:0;background:#fff;border-top:1px solid var(--border);padding:14px;margin:0 -14px;box-shadow:0 -2px 8px rgba(0,0,0,0.06);}
+  .selection-text{font-size:0.95rem;margin-bottom:10px;text-align:center;}
+  .hidden{display:none;}
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;padding:20px;z-index:50;}
+  .modal-box{background:#fff;border-radius:14px;padding:24px;max-width:380px;width:100%;text-align:center;}
+  .modal-box p{font-size:1rem;line-height:1.5;margin-bottom:18px;}
+  .modal-actions{display:flex;gap:10px;}
+  .modal-actions button{flex:1;}
+  .btn-secondary{background:#eee;color:#333;}
+  .success-box{text-align:center;padding:40px 20px;}
+  .success-box .icon{font-size:3rem;margin-bottom:10px;}
+</style>
+</head>
+<body>
+<header><h1>광수중학교 2026 3학년 진로 희망분야 제출</h1></header>
+<div class="wrap">
+
+  <div id="loginCard" class="card">
+    <label for="studentId">학번 (예: 3101)</label>
+    <input type="text" id="studentId" inputmode="numeric" placeholder="학번 4자리">
+    <label for="studentName">이름</label>
+    <input type="text" id="studentName" placeholder="이름을 입력하세요">
+    <div id="msg"></div>
+    <button class="btn-primary" id="verifyBtn" onclick="verify()">확인하고 시작하기</button>
+  </div>
+
+  <div id="mainArea" class="hidden">
+    <div class="student-info" id="studentInfo"></div>
+    <div id="fieldsContainer"></div>
+  </div>
+
+  <div id="successArea" class="hidden success-box card">
+    <div class="icon">✅</div>
+    <div id="successText" style="font-size:1.05rem;font-weight:600;"></div>
+    <p style="color:var(--muted);margin-top:10px;">제출이 완료되었습니다. 창을 닫아도 됩니다.</p>
+  </div>
+</div>
+
+<div id="modalOverlay" class="modal-overlay hidden">
+  <div class="modal-box">
+    <p id="modalText"></p>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeModal()">취소</button>
+      <button class="btn-primary" onclick="confirmSubmit()">제출하기</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzgL4ae-W1nkVv2oPk5-JQhnRBJal8uIJvOkey347u2_PjmvCkGS9dTnwh2A0i3bhMOIA/exec';
+
+const CAREER_DATA = [
+  {
+    field: '경영·회계·사무 관련직',
+    desc: '회사나 조직이 잘 돌아가도록 돈을 관리하고, 계획을 세우고, 사람과 정보를 연결하는 일을 해요. 숫자를 다루거나 꼼꼼하게 일을 처리하는 걸 좋아하면 잘 맞아요.',
+    jobs: [
+      ['감정평가사','땅, 건물, 자동차 같은 재산의 정확한 가격을 매겨주는 전문가예요.'],
+      ['경영컨설턴트','회사가 더 잘 운영되도록 문제를 분석하고 해결 방법을 알려주는 사람이에요.'],
+      ['관세사','물건을 외국에서 들여오거나 내보낼 때 필요한 세금과 절차를 처리해주는 전문가예요.'],
+      ['광고 및 홍보전문가','상품이나 브랜드를 사람들에게 멋지게 알리는 광고와 홍보를 만드는 일을 해요.'],
+      ['노무사','회사와 직원 사이에서 근로 조건이나 노동법 문제를 상담하고 해결해주는 전문가예요.'],
+      ['마케팅 및 여론조사전문가','사람들이 무엇을 좋아하고 원하는지 조사해서 상품 판매 전략을 세우는 일을 해요.'],
+      ['물류관리전문가','물건이 공장에서 소비자에게 가는 과정을 효율적으로 관리하는 일을 해요.'],
+      ['비서','회사 임원이나 중요한 사람의 일정과 업무를 도와주는 일을 해요.'],
+      ['행사기획가','결혼식, 축제, 컨퍼런스 같은 행사를 기획하고 준비하는 일을 해요.'],
+      ['회계사','회사의 돈이 들어오고 나가는 것을 정확하게 기록하고 점검하는 전문가예요.'],
+      ['세무사','개인이나 회사가 세금을 제대로 신고하고 낼 수 있도록 도와주는 전문가예요.'],
+      ['일반공무원','국가나 지방자치단체에서 국민을 위한 다양한 행정 업무를 담당해요.']
+    ]
+  },
+  {
+    field: '금융·보험 관련직',
+    desc: '돈과 관련된 위험을 계산하고, 보험이나 투자 상품을 통해 사람들의 재산을 지켜주는 일을 해요.',
+    jobs: [
+      ['보험계리사','보험료와 보험금을 수학적으로 계산해서 보험 상품을 설계하는 전문가예요.'],
+      ['손해사정사','사고가 났을 때 피해 규모를 조사해서 보험금을 정확히 계산해주는 일을 해요.'],
+      ['증권중개인','주식이나 채권을 사고파는 것을 도와주고 투자를 상담해주는 일을 해요.'],
+      ['금융자산운용가(펀드매니저)','여러 사람의 돈을 모아 주식이나 채권에 투자해서 수익을 만드는 전문가예요.']
+    ]
+  },
+  {
+    field: '교육 및 자연과학,사회과학 연구관련직',
+    desc: '학생을 가르치거나, 세상의 원리와 사회 현상을 연구해서 새로운 지식을 만드는 일을 해요.',
+    jobs: [
+      ['대학교수','대학교에서 전문 지식을 가르치고 연구하는 일을 해요.'],
+      ['사회과학연구원','사회, 정치, 경제 같은 사람들의 행동과 사회 현상을 연구해요.'],
+      ['생명과학연구원','동물, 식물, 세포 등 생명체의 원리를 연구하는 일을 해요.'],
+      ['생명정보연구원','컴퓨터와 생물학을 결합해서 유전자나 단백질 같은 생명 정보를 분석해요.'],
+      ['유치원교사','유치원에서 어린아이들이 즐겁게 배우고 성장하도록 돌보고 가르치는 일을 해요.'],
+      ['인문과학연구원','역사, 철학, 언어 같은 인간의 생각과 문화를 연구하는 일을 해요.'],
+      ['자연과학연구원','물리, 화학 같은 자연 현상의 원리를 실험하고 연구하는 일을 해요.'],
+      ['중고등학교교사','중학교나 고등학교에서 학생들에게 교과목을 가르치는 일을 해요.'],
+      ['초등학교교사','초등학교에서 어린 학생들에게 기초 학습과 생활을 가르치는 일을 해요.'],
+      ['특수교사','장애가 있는 학생들이 맞춤 교육을 받을 수 있도록 가르치는 선생님이에요.']
+    ]
+  },
+  {
+    field: '법률·경찰·소방·교도 관련직',
+    desc: '법을 지키고, 사람들의 안전을 지키고, 억울한 일을 해결해주는 일을 해요.',
+    jobs: [
+      ['경찰관','범죄를 예방하고 수사하며 시민의 안전을 지키는 일을 해요.'],
+      ['법무사','등기, 소송 서류 작성 같은 법률 관련 서류 업무를 도와주는 전문가예요.'],
+      ['변리사','발명이나 디자인 같은 지식재산을 특허로 보호받을 수 있게 도와주는 전문가예요.'],
+      ['변호사','법적인 문제로 어려움을 겪는 사람을 대신해서 변호하고 법률 자문을 해줘요.'],
+      ['소방관','불을 끄고 인명을 구조하며 재난 현장에서 사람들을 구하는 일을 해요.'],
+      ['판사 및 검사','판사는 법에 따라 재판에서 옳고 그름을 판단하고, 검사는 범죄를 수사하고 기소해요.']
+    ]
+  },
+  {
+    field: '보건·의료 관련직',
+    desc: '사람들의 건강을 진찰하고, 치료하고, 돌보는 일을 해요. 생명과 건강에 관심이 많으면 잘 맞아요.',
+    jobs: [
+      ['간호사 및 간호조무사','환자를 돌보고 치료를 돕는 일을 해요.'],
+      ['물리치료사','운동이나 기구를 이용해 다치거나 아픈 사람의 몸 기능을 회복시켜줘요.'],
+      ['방사선사','X-ray, CT 같은 방사선 장비로 몸속을 촬영해서 진단을 도와줘요.'],
+      ['수의사','동물을 진찰하고 치료하는 의사예요.'],
+      ['안경사','시력을 검사하고 그에 맞는 안경이나 렌즈를 맞춰주는 전문가예요.'],
+      ['약사','약을 조제하고 올바른 복용법을 안내해주는 전문가예요.'],
+      ['영양사','건강한 식단을 계획하고 영양 관리를 도와주는 전문가예요.'],
+      ['응급구조사','사고나 응급 상황에서 가장 먼저 환자를 응급처치하고 병원으로 옮기는 일을 해요.'],
+      ['의무기록사','환자의 진료 기록을 정리하고 관리하는 일을 해요.'],
+      ['의사','환자를 진찰하고 병을 치료하는 전문가예요.'],
+      ['임상병리사','혈액, 소변 같은 검체를 검사해서 질병을 진단하는 데 도움을 줘요.'],
+      ['치과기공사','치아 모형을 본떠 보철물(틀니, 크라운 등)을 만드는 전문가예요.'],
+      ['치과의사','치아와 입속 건강을 진찰하고 치료하는 의사예요.'],
+      ['한의사','한방 의학으로 침, 한약 등을 이용해 진찰하고 치료하는 의사예요.']
+    ]
+  },
+  {
+    field: '문화·예술·디자인·방송 관련직',
+    desc: '그림, 음악, 영상, 글, 디자인처럼 사람들에게 즐거움과 감동을 주는 창작 활동을 해요.',
+    jobs: [
+      ['UX디자이너','앱이나 웹사이트를 사람들이 쓰기 편하게 설계하는 디자이너예요.'],
+      ['국악인','우리나라 전통 음악을 연주하거나 노래하는 예술가예요.'],
+      ['기자','사건과 소식을 조사하고 취재해서 기사로 알려주는 일을 해요.'],
+      ['대중가수','노래를 부르며 많은 사람에게 음악으로 즐거움을 주는 직업이에요.'],
+      ['만화가','만화나 웹툰을 그리는 작가예요.'],
+      ['무용가','춤으로 감정과 이야기를 표현하는 예술가예요.'],
+      ['미술가','그림, 조각 등 미술 작품을 창작하는 예술가예요.'],
+      ['번역가','한 언어로 된 글을 다른 언어로 옮기는 일을 해요.'],
+      ['사서','도서관에서 책을 관리하고 이용자에게 자료를 안내해주는 일을 해요.'],
+      ['사진가','사진을 찍어 순간과 장면을 기록하고 표현하는 예술가예요.'],
+      ['시각디자이너','포스터, 로고 같은 시각적인 디자인을 만드는 일을 해요.'],
+      ['아나운서 및 쇼핑호스트','방송에서 뉴스를 진행하거나 상품을 소개하는 일을 해요.'],
+      ['애니메이터','만화나 캐릭터가 움직이는 애니메이션을 만드는 일을 해요.'],
+      ['연기자','영화, 드라마, 연극에서 배역을 연기하는 예술가예요.'],
+      ['음악가','작곡하거나 연주하며 음악을 만들고 들려주는 예술가예요.'],
+      ['작가','소설, 시, 시나리오 같은 글을 쓰는 사람이에요.'],
+      ['제품디자이너','일상에서 쓰는 물건의 모양과 기능을 디자인하는 일을 해요.'],
+      ['촬영기사','영화나 방송에서 카메라로 영상을 촬영하는 전문가예요.'],
+      ['출판물기획전문가','책이나 잡지를 어떤 내용으로 만들지 기획하는 일을 해요.'],
+      ['캐드원','컴퓨터 프로그램(CAD)으로 설계 도면을 그리는 일을 해요.'],
+      ['통역가','서로 다른 언어를 쓰는 사람들이 대화할 수 있도록 말을 옮겨주는 일을 해요.'],
+      ['패션디자이너','옷이나 액세서리를 디자인하는 일을 해요.'],
+      ['연예인매니저','연예인의 일정, 활동, 이미지를 관리해주는 일을 해요.'],
+      ['방송연출가','방송 프로그램을 기획하고 촬영을 지휘하는 일을 해요.'],
+      ['인테리어디자이너','실내 공간을 아름답고 편리하게 꾸미는 디자인을 하는 일을 해요.']
+    ]
+  },
+  {
+    field: '사회복지 및 종교관련직',
+    desc: '어려움을 겪는 사람들을 돕고, 마음을 보살피며 더 나은 사회를 만드는 일을 해요.',
+    jobs: [
+      ['보육교사','어린이집에서 영유아를 돌보고 가르치는 일을 해요.'],
+      ['사회단체활동가','환경, 인권 등 사회 문제를 해결하기 위해 활동하는 단체에서 일해요.'],
+      ['사회복지사','어려운 상황에 있는 사람들을 상담하고 필요한 도움을 연결해주는 일을 해요.'],
+      ['상담전문가','마음이 힘든 사람들의 이야기를 듣고 심리적인 도움을 주는 일을 해요.']
+    ]
+  },
+  {
+    field: '농림어업 관련직',
+    desc: '자연에서 곡식과 작물을 기르고, 가축을 키우고, 바다와 숲에서 자원을 얻는 일을 해요.',
+    jobs: [
+      ['곡식작물재배원','벼, 밀 같은 곡식이나 채소를 재배하는 일을 해요.'],
+      ['어부 및 해녀','바다에서 물고기나 해산물을 잡거나 채취하는 일을 해요.'],
+      ['임업인','숲을 가꾸고 나무를 기르거나 베어 목재 등을 생산하는 일을 해요.'],
+      ['축산인','소, 돼지, 닭 같은 가축을 길러 고기나 우유, 알 등을 생산하는 일을 해요.']
+    ]
+  }
+];
+
+let currentStudent = null;
+let selectedField = null;
+let selectedJob = null;
+
+function callApi(action, params) {
+  const url = new URL(APPS_SCRIPT_URL);
+  url.searchParams.set('action', action);
+  if (params) Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
+  return fetch(url.toString()).then(r => r.json());
+}
+
+function verify() {
+  const id = document.getElementById('studentId').value.trim();
+  const name = document.getElementById('studentName').value.trim();
+  const msg = document.getElementById('msg');
+  msg.textContent = '';
+  if (!id || !name) { msg.textContent = '학번과 이름을 모두 입력해주세요.'; return; }
+  const btn = document.getElementById('verifyBtn');
+  btn.disabled = true; btn.textContent = '확인 중...';
+  callApi('verify', { id, name }).then(res => {
+    btn.disabled = false; btn.textContent = '확인하고 시작하기';
+    if (!res.ok) { msg.textContent = res.error || '확인할 수 없습니다.'; return; }
+    currentStudent = { id, name, grade: res.grade, ban: res.ban, num: res.num };
+    document.getElementById('loginCard').classList.add('hidden');
+    document.getElementById('mainArea').classList.remove('hidden');
+    let info = `<b>${res.grade}학년 ${res.ban}반 ${res.num}번 ${res.name}</b> 학생, 안녕하세요!`;
+    if (res.alreadySubmitted) info += `<br>이전 제출 내용: <b>${res.field} - ${res.job}</b> (다시 제출하면 내용이 바뀝니다)`;
+    document.getElementById('studentInfo').innerHTML = info;
+    renderFields();
+  }).catch(() => { btn.disabled = false; btn.textContent = '확인하고 시작하기'; msg.textContent = '서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.'; });
+}
+
+function renderFields() {
+  const container = document.getElementById('fieldsContainer');
+  container.innerHTML = CAREER_DATA.map((f, fi) => `
+    <div class="field-group" id="field-${fi}">
+      <div class="field-head" onclick="toggleField(${fi})">
+        <div>
+          <div class="field-title">${f.field}</div>
+          <div class="field-desc">${f.desc}</div>
+        </div>
+        <div class="chevron">▼</div>
+      </div>
+      <div class="job-list">
+        ${f.jobs.map((j, ji) => `
+          <div class="job-row">
+            <div class="job-text">
+              <div class="job-name">${j[0]}</div>
+              <div class="job-desc">${j[1]}</div>
+            </div>
+            <button class="pick-btn" id="pick-${fi}-${ji}" onclick="pickJob(${fi},${ji})">선택하기</button>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+function toggleField(fi) {
+  document.getElementById('field-' + fi).classList.toggle('open');
+}
+
+function pickJob(fi, ji) {
+  document.querySelectorAll('.pick-btn.selected').forEach(b => { b.classList.remove('selected'); b.textContent = '선택하기'; });
+  const btn = document.getElementById(`pick-${fi}-${ji}`);
+  btn.classList.add('selected');
+  btn.textContent = '선택됨';
+  selectedField = CAREER_DATA[fi].field;
+  selectedJob = CAREER_DATA[fi].jobs[ji][0];
+  showSelectionModal();
+}
+
+function showSelectionModal() {
+  document.getElementById('modalText').textContent = `"${selectedJob}"를 선택하셨습니다. 제출하시겠습니까?`;
+  document.getElementById('modalOverlay').classList.remove('hidden');
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.add('hidden');
+}
+
+function confirmSubmit() {
+  closeModal();
+  callApi('submit', { id: currentStudent.id, name: currentStudent.name, field: selectedField, job: selectedJob }).then(res => {
+    if (!res.ok) { alert(res.error || '제출에 실패했습니다.'); return; }
+    document.getElementById('mainArea').classList.add('hidden');
+    document.getElementById('successArea').classList.remove('hidden');
+    document.getElementById('successText').textContent = `${selectedField} - ${selectedJob} 제출 완료`;
+  }).catch(() => alert('서버에 연결할 수 없습니다. 다시 시도해주세요.'));
+}
+</script>
+</body>
+</html>
