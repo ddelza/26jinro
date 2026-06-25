@@ -35,11 +35,11 @@
   <div class="toolbar">
     <div class="field-set">
       <label>학년</label>
-      <select id="gradeFilter" onchange="onGradeChange()"><option value="">전체</option></select>
+      <select id="gradeFilter" onchange="onGradeChange()" disabled><option value="">불러오는 중...</option></select>
     </div>
     <div class="field-set">
       <label>반</label>
-      <select id="banFilter" onchange="applyFilter()"><option value="">전체</option></select>
+      <select id="banFilter" onchange="applyFilter()" disabled><option value="">불러오는 중...</option></select>
     </div>
     <div class="field-set grow">
       <label>이름 검색</label>
@@ -74,6 +74,10 @@ function callApi(action, params) {
 function loadData() {
   document.getElementById('loading').style.display = 'block';
   document.getElementById('tableWrap').style.display = 'none';
+  const gradeSel = document.getElementById('gradeFilter');
+  const banSel = document.getElementById('banFilter');
+  gradeSel.disabled = true; gradeSel.innerHTML = '<option value="">불러오는 중...</option>';
+  banSel.disabled = true; banSel.innerHTML = '<option value="">불러오는 중...</option>';
   callApi('list').then(res => {
     if (!res.ok) { document.getElementById('loading').textContent = '불러오기 실패: ' + (res.error || ''); return; }
     allRecords = res.records.sort((a, b) => (a.grade - b.grade) || (a.ban - b.ban) || (a.num - b.num));
@@ -89,6 +93,7 @@ function populateGradeFilter() {
   const grades = [...new Set(allRecords.map(r => r.grade))].sort((a, b) => a - b);
   const sel = document.getElementById('gradeFilter');
   sel.innerHTML = '<option value="">전체</option>' + grades.map(g => `<option value="${g}">${g}학년</option>`).join('');
+  sel.disabled = false;
 }
 
 function populateBanFilter() {
@@ -99,6 +104,7 @@ function populateBanFilter() {
   const prev = sel.value;
   sel.innerHTML = '<option value="">전체</option>' + bans.map(b => `<option value="${b}">${b}반</option>`).join('');
   if (bans.some(b => String(b) === prev)) sel.value = prev;
+  sel.disabled = false;
 }
 
 function onGradeChange() {
