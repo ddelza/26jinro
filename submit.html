@@ -39,6 +39,8 @@
   .job-text{flex:1;}
   .job-name{font-weight:600;font-size:0.95rem;}
   .job-desc{font-size:0.82rem;color:var(--muted);margin-top:3px;line-height:1.4;}
+  .custom-job-input{margin-top:8px;width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:0.88rem;}
+  .custom-job-input:focus{outline:none;border-color:var(--accent);}
   .pick-btn{flex-shrink:0;background:var(--accent);color:#fff;padding:8px 14px;border-radius:8px;font-size:0.85rem;white-space:nowrap;}
   .pick-btn.selected{background:var(--primary);}
   .selection-bar{position:sticky;bottom:0;background:#fff;border-top:1px solid var(--border);padding:14px;margin:0 -14px;box-shadow:0 -2px 8px rgba(0,0,0,0.06);}
@@ -287,6 +289,16 @@ function renderFields() {
             ${isAdmin ? '' : `<button class="pick-btn" id="pick-${fi}-${ji}" onclick="pickJob(${fi},${ji})">선택하기</button>`}
           </div>
         `).join('')}
+        ${isAdmin ? '' : `
+          <div class="job-row">
+            <div class="job-text">
+              <div class="job-name">기타: 직접 작성</div>
+              <div class="job-desc">위 목록에 원하는 직업이 없으면 여기에 직접 입력하세요.</div>
+              <input type="text" class="custom-job-input" id="custom-job-${fi}" placeholder="희망 직업을 입력하세요">
+            </div>
+            <button class="pick-btn" id="pick-${fi}-custom" onclick="pickCustomJob(${fi})">선택하기</button>
+          </div>
+        `}
       </div>
     </div>
   `).join('');
@@ -303,6 +315,19 @@ function pickJob(fi, ji) {
   btn.textContent = '선택됨';
   selectedField = CAREER_DATA[fi].field;
   selectedJob = CAREER_DATA[fi].jobs[ji][0];
+  showSelectionModal();
+}
+
+function pickCustomJob(fi) {
+  const input = document.getElementById(`custom-job-${fi}`);
+  const value = input.value.trim();
+  if (!value) { input.focus(); return; }
+  document.querySelectorAll('.pick-btn.selected').forEach(b => { b.classList.remove('selected'); b.textContent = '선택하기'; });
+  const btn = document.getElementById(`pick-${fi}-custom`);
+  btn.classList.add('selected');
+  btn.textContent = '선택됨';
+  selectedField = CAREER_DATA[fi].field;
+  selectedJob = value;
   showSelectionModal();
 }
 
