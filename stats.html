@@ -151,6 +151,7 @@ function render(records) {
   // 3) 분야별 직업 표 (3x3 그리드)
   document.getElementById('jobGrid').innerHTML = CAREER_FIELDS.map(f => {
     const fieldSubs = submitted.filter(r => r.field === f.field);
+    const knownJobs = new Set(f.jobs);
     const rows = f.jobs.map(job => {
       const people = fieldSubs.filter(r => r.job === job);
       const cnt = people.length;
@@ -160,13 +161,20 @@ function render(records) {
         <td class="cnt${cnt ? ' has-data' : ''}" data-people="${cnt ? escapeAttr(peopleStr) : ''}">${cnt}</td>
       </tr>`;
     }).join('');
+    const others = fieldSubs.filter(r => !knownJobs.has(r.job));
+    const otherCnt = others.length;
+    const otherStr = others.map(p => `${p.grade}학년 ${p.ban}반 ${p.num}번 ${p.name} (${p.id}) - ${p.job}`).join('\n');
+    const otherRow = `<tr>
+      <td>기타 (직접 작성)</td>
+      <td class="cnt${otherCnt ? ' has-data' : ''}" data-people="${otherCnt ? escapeAttr(otherStr) : ''}">${otherCnt}</td>
+    </tr>`;
     return `
       <div class="job-card" style="border-color:${f.color};">
         <div class="field-name" style="color:${f.color};">${f.field}</div>
         <div class="field-count">총 ${fieldSubs.length}명 제출</div>
         <table class="job-table">
           <thead><tr><th>직업</th><th style="text-align:right;">제출자 수</th></tr></thead>
-          <tbody>${rows}</tbody>
+          <tbody>${rows}${otherRow}</tbody>
         </table>
       </div>
     `;
